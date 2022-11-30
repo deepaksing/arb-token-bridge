@@ -182,7 +182,12 @@ export const useArbTokenBridge = (
     try {
       tx = await ethBridger.deposit({
         amount,
-        l1Signer
+        l1Signer,
+        overrides: {
+          maxPriorityFeePerGas: BigNumber.from(0),
+          maxFeePerGas: BigNumber.from(0),
+          gasLimit: BigNumber.from(31000)
+        }
       })
 
       if (txLifecycle?.onTxSubmit) {
@@ -462,7 +467,21 @@ export const useArbTokenBridge = (
 
     const tx = await erc20Bridger.deposit({
       ...depositRequest,
-      l1Signer
+      l1Signer,
+      overrides: {
+        maxPriorityFeePerGas: BigNumber.from(0),
+        maxFeePerGas: BigNumber.from(0)
+      },
+      retryableGasOverrides: {
+        maxSubmissionFee: {
+          base: BigNumber.from(0),
+          percentIncrease: BigNumber.from(0)
+        },
+        maxFeePerGas: {
+          base: BigNumber.from(0),
+          percentIncrease: BigNumber.from(0)
+        }
+      }
     })
 
     if (txLifecycle?.onTxSubmit) {
