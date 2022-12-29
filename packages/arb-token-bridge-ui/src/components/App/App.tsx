@@ -397,7 +397,7 @@ function ConnectionFallback(props: FallbackProps): JSX.Element {
             layout="row"
             imgProps={{
               className: 'sm:w-[300px]',
-              src: '/images/arbinaut-fixing-spaceship.webp',
+              src: '/images/arbinaut-fixing-spaceship3.png',
               alt: 'Arbinaut fixing a spaceship'
             }}
           >
