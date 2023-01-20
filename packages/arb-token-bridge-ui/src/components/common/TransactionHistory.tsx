@@ -1,7 +1,12 @@
 import { Tab } from '@headlessui/react'
 import { Fragment, useEffect, useMemo, useState } from 'react'
+import { useNetworksAndSigners } from '../../hooks/useNetworksAndSigners'
 import { useAppState } from '../../state'
 import { MergedTransaction } from '../../state/app/state'
+import {
+  filterAndSortTransactions,
+  transformDeposits
+} from '../../state/app/utils'
 
 import { PendingWithdrawalsLoadedState } from '../../util'
 import {
@@ -41,10 +46,15 @@ export const TransactionHistory = () => {
       mergedTransactions,
       pwLoadedState,
       arbTokenBridge: {
+        walletAddress,
         transactions: { setTransactions: setTransactionsInStore }
       }
     }
   } = useAppState()
+
+  const { l1, l2 } = useNetworksAndSigners()
+  const l1NetworkChainId = l1.network.chainID
+  const l2NetworkChainId = l2.network.chainID
 
   /* 
     Deposit history
@@ -55,28 +65,50 @@ export const TransactionHistory = () => {
     pageSize: 10
   })
 
+  const [deposits, setDeposits] = useState<MergedTransaction[]>([])
+
   const { data: depositsFromSubgraph, isValidating: depositsLoading } =
     useDeposits(pageParams)
 
-  useEffect(() => {
-    '***** called depositsFromSubgraph useEffect ****'
-    setTransactionsInStore(depositsFromSubgraph || [])
+  const transformedDeposits = useMemo(() => {
+    console.log('** deposits changed - will call useEffect **')
+    return transformDeposits(
+      filterAndSortTransactions(
+        depositsFromSubgraph || [],
+        walletAddress,
+        l1NetworkChainId,
+        l2NetworkChainId
+      )
+    )
   }, [depositsFromSubgraph])
 
-  const [deposits, withdrawals] = useMemo(() => {
-    const _deposits: MergedTransaction[] = []
-    const _withdrawals: MergedTransaction[] = []
+  useEffect(() => {
+    // when you fetch new deposits, add them to prev deposits
 
-    mergedTransactions.forEach(tx => {
-      if (isDeposit(tx)) {
-        _deposits.push(tx)
-      } else {
-        _withdrawals.push(tx)
-      }
-    })
+    console.log('** CALLING USE EFFECT *** ')
 
-    return [_deposits, _withdrawals]
-  }, [mergedTransactions, depositsFromSubgraph])
+    setDeposits(prevDeposits => [...prevDeposits, ...transformedDeposits])
+  }, [transformedDeposits])
+
+  // useEffect(() => {
+  //   '***** called depositsFromSubgraph useEffect ****'
+  //   setTransactionsInStore(depositsFromSubgraph)
+  // }, [depositsFromSubgraph])
+
+  // const [deposits, withdrawals] = useMemo(() => {
+  //   const _deposits: MergedTransaction[] = []
+  //   const _withdrawals: MergedTransaction[] = []
+
+  //   mergedTransactions.forEach(tx => {
+  //     if (isDeposit(tx)) {
+  //       _deposits.push(tx)
+  //     } else {
+  //       _withdrawals.push(tx)
+  //     }
+  //   })
+
+  //   return [_deposits, _withdrawals]
+  // }, [mergedTransactions, depositsFromSubgraph]);
 
   return (
     <>
@@ -114,21 +146,22 @@ export const TransactionHistory = () => {
         <Tab.Panel>
           <TransactionsTable
             // Currently we load deposit history from local cache, so it's always a success
-            status={depositsLoading ? 'loading' : 'success'}
+            status={'success'} // only success because loading state is managed by infinite scroll lib
             transactions={deposits}
             className="-mt-0.5 border-2 border-blue-arbitrum border-opacity-80 bg-gray-3"
             pageParams={pageParams}
             updatePageParams={setPageParams}
+            depositsLoading={depositsLoading}
           />
         </Tab.Panel>
         <Tab.Panel>
-          <TransactionsTable
+          {/* <TransactionsTable
             status={getTransactionsDataStatus(pwLoadedState)}
             transactions={withdrawals}
             className="-mt-0.5 border-2 border-blue-arbitrum border-opacity-80 bg-gray-3"
             pageParams={pageParams}
             updatePageParams={setPageParams}
-          />
+          /> */}
         </Tab.Panel>
       </Tab.Group>
     </>

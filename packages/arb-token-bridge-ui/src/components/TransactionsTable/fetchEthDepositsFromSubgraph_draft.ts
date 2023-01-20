@@ -77,6 +77,12 @@ export async function fetchETHDepositsFromSubgraph({
   pageNumber?: number
   searchString?: string
 }): Promise<Transaction[]> {
+  console.log('***** fetching ETH deposits for *****', {
+    pageSize,
+    pageNumber,
+    searchString
+  })
+
   const l1ChainId = (await l1Provider.getNetwork()).chainId
   const l2ChainId = (await l2Provider.getNetwork()).chainId
 

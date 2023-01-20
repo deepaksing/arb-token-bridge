@@ -6,6 +6,7 @@ import { TransactionsTableDepositRow } from './TransactionsTableDepositRow'
 import { TransactionsTableWithdrawalRow } from './TransactionsTableWithdrawalRow'
 import { useNetworksAndSigners } from '../../hooks/useNetworksAndSigners'
 import { PageParams } from '../common/TransactionHistory'
+import InfiniteScroll from 'react-infinite-scroll-component'
 
 const isDeposit = (tx: MergedTransaction) => {
   return tx.direction === 'deposit' || tx.direction === 'deposit-l1'
@@ -41,6 +42,7 @@ export type TransactionsTableProps = {
   pageParams?: PageParams
   updatePageParams?: React.Dispatch<React.SetStateAction<PageParams>>
 
+  depositsLoading: boolean
   // searchString?: string
   // pagination?: { pageNumber?: number; pageSize?: number }
   // handleSearch?: () => void
@@ -52,7 +54,8 @@ export function TransactionsTable({
   transactions,
   className = '',
   pageParams,
-  updatePageParams
+  updatePageParams,
+  depositsLoading
 }: TransactionsTableProps) {
   const { isSmartContractWallet } = useNetworksAndSigners()
 
@@ -120,10 +123,15 @@ export function TransactionsTable({
           Next
         </button>
       </div>
-      <table
-        className={`w-full rounded-tr-lg rounded-br-lg rounded-bl-lg bg-gray-1 ${className}`}
+
+      {/* Table */}
+      <div
+        id="scrollableDiv"
+        style={{ height: 300, overflow: 'scroll' }}
+        className={`w-full rounded-tr-lg rounded-br-lg rounded-bl-lg bg-gray-1 ${className} `}
       >
-        <thead className="border-b border-gray-10 text-left text-sm text-gray-10">
+        {/* Table header */}
+        <div className="t-0 sticky border-b border-gray-10 text-left text-sm text-gray-10">
           <tr>
             <th className="py-3 pl-6 pr-3 font-normal">Status</th>
             <th className="px-3 py-3 font-normal">Time</th>
@@ -133,61 +141,70 @@ export function TransactionsTable({
               {/* Empty header text */}
             </th>
           </tr>
-        </thead>
+        </div>
 
-        <tbody>
-          {status === 'loading' && (
-            <EmptyTableRow>
-              <div className="flex flex-row items-center space-x-3">
-                <Loader type="TailSpin" color="black" width={16} height={16} />
-                <span className="text-sm font-medium">
-                  Loading transactions
-                </span>
-              </div>
-            </EmptyTableRow>
-          )}
+        {/* Table body */}
 
-          {status === 'error' && (
-            <EmptyTableRow>
-              <span className="text-sm font-medium text-brick-dark">
-                Failed to load transactions
-              </span>
-            </EmptyTableRow>
-          )}
+        <InfiniteScroll
+          next={next}
+          hasMore={true}
+          loader={<></>}
+          dataLength={transactions.length}
+          className="w-full"
+          scrollableTarget="scrollableDiv"
+        >
+          {transactions.map((tx, index) => {
+            const isFinalRow = index === transactions.length - 1
 
-          {status === 'success' && (
-            <>
-              {transactions.length > 0 ? (
-                transactions.map((tx, index) => {
-                  const isFinalRow = index === transactions.length - 1
+            return isDeposit(tx) ? (
+              <TransactionsTableDepositRow
+                key={`${tx.txId}-${tx.direction}`}
+                tx={tx}
+                className={!isFinalRow ? 'border-b border-gray-10' : ''}
+              />
+            ) : (
+              <TransactionsTableWithdrawalRow
+                key={`${tx.txId}-${tx.direction}`}
+                tx={tx}
+                className={!isFinalRow ? 'border-b border-gray-10' : ''}
+              />
+            )
+          })}
+        </InfiniteScroll>
 
-                  return isDeposit(tx) ? (
-                    <TransactionsTableDepositRow
-                      key={`${tx.txId}-${tx.direction}`}
-                      tx={tx}
-                      className={!isFinalRow ? 'border-b border-gray-10' : ''}
-                    />
-                  ) : (
-                    <TransactionsTableWithdrawalRow
-                      key={`${tx.txId}-${tx.direction}`}
-                      tx={tx}
-                      className={!isFinalRow ? 'border-b border-gray-10' : ''}
-                    />
-                  )
-                })
-              ) : (
-                <EmptyTableRow>
-                  <span className="text-sm font-medium">
-                    {isSmartContractWallet
-                      ? 'You can see tx history in your smart contract wallet'
-                      : 'No transactions'}
-                  </span>
-                </EmptyTableRow>
-              )}
-            </>
-          )}
-        </tbody>
-      </table>
+        {depositsLoading && (
+          <div className="w-full bg-dark text-center text-2xl text-white">
+            Loading....
+          </div>
+        )}
+
+        {status === 'success' && !transactions.length && (
+          <EmptyTableRow>
+            <span className="text-sm font-medium">
+              {isSmartContractWallet
+                ? 'You can see tx history in your smart contract wallet'
+                : 'No transactions'}
+            </span>
+          </EmptyTableRow>
+        )}
+
+        {status === 'loading' && (
+          <EmptyTableRow>
+            <div className="flex flex-row items-center space-x-3">
+              <Loader type="TailSpin" color="black" width={16} height={16} />
+              <span className="text-sm font-medium">Loading transactions</span>
+            </div>
+          </EmptyTableRow>
+        )}
+
+        {status === 'error' && (
+          <EmptyTableRow>
+            <span className="text-sm font-medium text-brick-dark">
+              Failed to load transactions
+            </span>
+          </EmptyTableRow>
+        )}
+      </div>
     </>
   )
 }

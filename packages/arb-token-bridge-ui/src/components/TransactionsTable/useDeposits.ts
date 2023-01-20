@@ -3,6 +3,11 @@ import { useAppState } from '../../state'
 import { useAppContextState } from '../App/AppContext'
 import { fetchETHDepositsFromSubgraph } from './fetchEthDepositsFromSubgraph_draft'
 import useSWR from 'swr'
+import {
+  filterAndSortTransactions,
+  transformDeposits
+} from '../../state/app/utils'
+import { useState } from 'react'
 
 export const useDeposits = ({
   searchString,
@@ -20,11 +25,13 @@ export const useDeposits = ({
   } = useAppState()
 
   const { currentL1BlockNumber } = useAppContextState()
-
   const { l1, l2 } = useNetworksAndSigners()
 
   const l1Provider = l1.provider,
     l2Provider = l2.provider
+
+  // const l1NetworkChainId = l1.network.chainID
+  // const l2NetworkChainId = l2.network.chainID
 
   return useSWR(
     [
@@ -66,4 +73,18 @@ export const useDeposits = ({
       revalidateOnReconnect: false
     }
   )
+
+  // return {
+  //   transformedDeposits: transformDeposits(
+  //     filterAndSortTransactions(
+  //       deposits,
+  //       walletAddress,
+  //       l1NetworkChainId,
+  //       l2NetworkChainId
+  //     )
+  //   ),
+  //   deposits,
+  //   error,
+  //   isValidating
+  // }
 }
