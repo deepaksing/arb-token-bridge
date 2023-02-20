@@ -516,11 +516,11 @@ function TokensPanel({
 
           <Button
             type="submit"
-            variant="secondary"
+            variant="primary"
             loading={isAddingToken}
             loadingProps={{ loaderColor: '#999999' /** text-gray-9 */ }}
             disabled={newToken === '' || !isAddress(newToken)}
-            className="border border-gray-4 py-1 text-gray-9"
+            className="border border-gray-4 py-1 text-white"
             aria-label="Add New Token"
           >
             Add
