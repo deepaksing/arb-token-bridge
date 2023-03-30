@@ -73,7 +73,7 @@ export const useWithdrawals = (withdrawalPageParams: PageParams) => {
       withdrawalPageParams.pageSize,
       withdrawalPageParams.searchString
     ],
-    (
+    ([
       _,
       _walletAddress,
       _l1Provider,
@@ -82,7 +82,7 @@ export const useWithdrawals = (withdrawalPageParams: PageParams) => {
       _pageNumber,
       _pageSize,
       _searchString
-    ) =>
+    ]) =>
       fetchCompleteWithdrawalData({
         walletAddress: _walletAddress,
         l1Provider: _l1Provider,
